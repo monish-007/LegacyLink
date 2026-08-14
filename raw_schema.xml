@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" xmlns:cus="http://legacybank.com/customers">
+   <soapenv:Header>
+      <cus:AuthToken>TX-9982-AB-11</cus:AuthToken>
+   </soapenv:Header>
+   <soapenv:Body>
+      <cus:GetCustomerDataResponse>
+         <cus:CustomerProfile>
+            <cus:InternalID>991029384</cus:InternalID>
+            <cus:FullName>Monish K C</cus:FullName>
+            <cus:RiskTier>LOW</cus:RiskTier>
+         </cus:CustomerProfile>
+         <cus:Accounts>
+            <cus:Deposit>
+               <cus:Checking>1542.50</cus:Checking>
+               <cus:Savings>10500.00</cus:Savings>
+               <cus:Currency>INR</cus:Currency>
+            </cus:Deposit>
+            <cus:Mortgage>
+               <cus:LoanID>ML-55412</cus:LoanID>
+               <cus:PrincipalRemaining>4500000.00</cus:PrincipalRemaining>
+               <cus:InterestRate>7.5</cus:InterestRate>
+               <cus:NextPaymentDue>2026-09-01</cus:NextPaymentDue>
+            </cus:Mortgage>
+         </cus:Accounts>
+         <cus:RecentTransactions>
+            <cus:Tx>
+               <cus:Date>2026-08-14</cus:Date>
+               <cus:Merchant>AWS Cloud Services</cus:Merchant>
+               <cus:Amount>-450.00</cus:Amount>
+            </cus:Tx>
+            <cus:Tx>
+               <cus:Date>2026-08-12</cus:Date>
+               <cus:Merchant>Dodo Payments Inc</cus:Merchant>
+               <cus:Amount>12500.00</cus:Amount>
+            </cus:Tx>
+         </cus:RecentTransactions>
+      </cus:GetCustomerDataResponse>
+   </soapenv:Body>
+</soapenv:Envelope>
