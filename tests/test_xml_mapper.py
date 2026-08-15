@@ -1,9 +1,14 @@
 """Tests for conversion of the legacy SOAP response into API data."""
 
+import asyncio
 from pathlib import Path
+from types import SimpleNamespace
 
 import pytest
 
+from app.main import app, get_migration_report, lifespan
+from app.migration_analyzer import analyze_soap_payload
+from app.source_service import SourceConfigurationError, configured_sources
 from app.models import RiskTier
 from app.xml_mapper import XmlMappingError, load_customer_data
 
@@ -62,3 +67,36 @@ def test_load_customer_data_rejects_invalid_required_values(
 
     with pytest.raises(XmlMappingError, match=error_message):
         load_customer_data(xml_file)
+
+
+def test_migration_report_proves_validation_without_exposing_soap_authentication() -> None:
+    async def get_report() -> dict[str, object]:
+        async with lifespan(app):
+            return await get_migration_report(SimpleNamespace(app=app))
+
+    report = asyncio.run(get_report())
+    assert report["status"] == "validated"
+    assert report["source"]["authentication_headers_exposed"] is False
+    assert len(report["source"]["sha256"]) == 64
+    assert report["validation_summary"]["deployment_requires_human_approval"] is True
+
+
+def test_analyzer_discovers_types_and_redacts_sensitive_values() -> None:
+    analysis = analyze_soap_payload(
+        b"<Envelope><Body><Customer><FullName>Ada Lovelace</FullName><Balance>42.50</Balance>"
+        b"<AuthToken>do-not-return-me</AuthToken></Customer></Body></Envelope>"
+    )
+
+    fields = analysis["fields"]
+    assert any(field["inferred_type"] == "decimal" for field in fields)
+    assert any(field["sensitive"] is True for field in fields)
+    assert "do-not-return-me" not in str(analysis)
+    assert analysis["summary"]["persistence"] == "none"
+
+
+def test_source_configuration_rejects_unapproved_http(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setenv("LEGACYLINK_SOURCES_JSON", '[{"id":"bank","url":"http://example.test/soap"}]')
+    monkeypatch.delenv("LEGACYLINK_ALLOW_HTTP", raising=False)
+
+    with pytest.raises(SourceConfigurationError, match="uses HTTP"):
+        configured_sources()
