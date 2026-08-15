@@ -14,7 +14,7 @@ class LegacySOAPHandler(http.server.SimpleHTTPRequestHandler):
         xml_response = """<?xml version="1.0" encoding="UTF-8"?>
 <soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" xmlns:cus="http://legacybank.com/customers">
    <soapenv:Header>
-      <cus:AuthToken>TX-9982-AB-11</cus:AuthToken>
+      <cus:AuthToken>DEMO_TOKEN_REDACTED</cus:AuthToken>
    </soapenv:Header>
    <soapenv:Body>
       <cus:GetCustomerDataResponse>
