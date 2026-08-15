@@ -2,11 +2,11 @@
   "rewrites": [
     {
       "source": "/",
-      "destination": "/api/"
+      "destination": "/api?path=/"
     },
     {
-      "source": "/:path((?!api/).*)",
-      "destination": "/api/:path*"
+      "source": "/:path*",
+      "destination": "/api?path=/:path*"
     }
   ]
 }

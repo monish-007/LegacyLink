@@ -4,9 +4,10 @@ import asyncio
 from contextlib import asynccontextmanager
 from hashlib import sha256
 from pathlib import Path
+from urllib.parse import parse_qs
 
 from fastapi import Body, FastAPI, HTTPException, Request
-from fastapi.responses import HTMLResponse
+from fastapi.responses import HTMLResponse, RedirectResponse
 
 from .metering import dodo_usage_metering
 from .migration_analyzer import XmlAnalysisError, analyze_soap_payload
@@ -43,12 +44,22 @@ async def strip_vercel_function_prefix(request: Request, call_next):
     Vercel routes the public URL to ``api/index.py``. The ASGI path may retain
     the function prefix, so remove it before FastAPI selects a route.
     """
+    requested_path = parse_qs(request.scope["query_string"].decode("utf-8")).get("path", [None])[0]
+    if requested_path and requested_path.startswith("/"):
+        request.scope["path"] = requested_path
+
     path = request.scope["path"]
     if path == "/api":
         request.scope["path"] = "/"
     elif path.startswith("/api/"):
         request.scope["path"] = path[4:]
     return await call_next(request)
+
+
+@app.get("/", include_in_schema=False)
+async def root() -> RedirectResponse:
+    """Open the review dashboard from the public deployment URL."""
+    return RedirectResponse(url="/dashboard")
 
 
 @app.get("/health", tags=["operations"])
