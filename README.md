@@ -21,7 +21,7 @@ LegacyLink makes the workflow faster while preserving a human review boundary:
 Legacy SOAP/XML → contract discovery → typed REST draft → validation evidence → human review
 ```
 
-## What judges can verify immediately
+## Available capabilities
 
 Open the [live dashboard](https://legacy-link-monish-007s-projects.vercel.app/dashboard), or inspect the [interactive OpenAPI docs](https://legacy-link-monish-007s-projects.vercel.app/docs).
 
@@ -34,11 +34,13 @@ Open the [live dashboard](https://legacy-link-monish-007s-projects.vercel.app/da
 | Trusted source workflow | `GET /v1/sources` and `POST /v1/sources/{source_id}/analyze` use server-configured sources only |
 | Operational check | `GET /health` returns the service health status |
 
-## A 60-second reviewer path
+## Demonstration workflow
 
-1. Open the dashboard and run **Execute GET customer data**. This shows the clean REST response produced from the legacy XML fixture.
-2. Open **View validation evidence**. This shows the SHA-256 source fingerprint, validated sections, strict types, and the explicit human-approval requirement.
-3. Paste the following new payload into the XML analyzer and select **Analyze contract**:
+The deployed dashboard provides a concise workflow for inspecting the modernization result:
+
+1. Run **Execute GET customer data** to view the strictly typed REST response produced from the legacy XML fixture.
+2. Open **View validation evidence** to inspect the SHA-256 source fingerprint, validated sections, strict types, and explicit human-approval requirement.
+3. Submit a new XML payload to the analyzer to generate a candidate contract:
 
 ```xml
 <Envelope>
