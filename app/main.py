@@ -36,6 +36,21 @@ app = FastAPI(
 app.middleware("http")(dodo_usage_metering)
 
 
+@app.middleware("http")
+async def strip_vercel_function_prefix(request: Request, call_next):
+    """Let the Vercel ``/api`` function serve the app's public routes.
+
+    Vercel routes the public URL to ``api/index.py``. The ASGI path may retain
+    the function prefix, so remove it before FastAPI selects a route.
+    """
+    path = request.scope["path"]
+    if path == "/api":
+        request.scope["path"] = "/"
+    elif path.startswith("/api/"):
+        request.scope["path"] = path[4:]
+    return await call_next(request)
+
+
 @app.get("/health", tags=["operations"])
 async def health() -> dict[str, str]:
     return {"status": "ok"}

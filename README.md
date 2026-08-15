@@ -77,7 +77,8 @@ secret key server-only; do not place it in browser code or a repository.
 ### Vercel (free Hobby demo)
 
 For a personal hackathon demo, import the `main` branch into Vercel. The
-root-level `index.py` file is the Vercel FastAPI entrypoint. Add `SUPABASE_URL` and
+`api/index.py` file is the Vercel FastAPI entrypoint. The included rewrite rules
+route the public URLs to this function. Add `SUPABASE_URL` and
 `SUPABASE_SECRET_KEY` in Vercel's Environment Variables before deploying. After
 deployment, open `/dashboard` on the Vercel URL.
 
