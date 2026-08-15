@@ -1,101 +1,147 @@
-# LegacyLink: Verifiable SOAP-to-REST modernization
+# LegacyLink
 
-LegacyLink turns a legacy SOAP response into a typed FastAPI service that a modern
-team can inspect, test, and approve. Codex accelerates the implementation; strict
-runtime validation and a human deployment gate keep it accountable.
+> Codex-assisted SOAP-to-REST modernization with strict contracts, validation evidence, and privacy-aware XML discovery.
 
-## Why it matters
+[Live demo](https://legacy-link-monish-007s-projects.vercel.app/dashboard) · [API docs](https://legacy-link-monish-007s-projects.vercel.app/docs)
 
-Teams integrating with undocumented SOAP systems often spend days reverse-engineering
-deeply nested XML before they can make a safe API change. LegacyLink demonstrates a
-repeatable path from a captured SOAP contract to an OpenAPI-backed REST endpoint,
-while retaining evidence that the mapping was validated.
+## The problem
 
-## What a judge can verify in two minutes
+Many enterprise systems still expose deeply nested, undocumented SOAP/XML services.
+Modern teams must manually reverse-engineer those payloads before they can build a
+safe REST integration—often with sensitive data and no reliable schema.
 
-1. Start the app and open `/dashboard`.
-2. Click **Execute GET /v1/customer-data** to inspect the strictly typed JSON API.
-3. Click **View validation evidence** to see the source digest, validated sections,
-   strict types, and explicit human-approval requirement.
-4. Paste a second SOAP payload into **Try an unseen SOAP payload**. LegacyLink
-   discovers candidate JSON fields and types in memory, flags sensitive fields, and
-   returns no source values.
-5. Configure an allowlisted source and use **Analyze a configured live source** to
-   fetch it server-side, analyze only its contract metadata, and optionally write an
-   audit record to Supabase.
-6. Open `/docs` to inspect the generated OpenAPI contract.
+## The solution
 
-The raw SOAP authentication header is never exposed by either public endpoint.
-The dashboard uses no build step or external CSS dependency, so it remains readable
-when a demo environment has no internet access.
+LegacyLink turns a SOAP response into a reviewable FastAPI modernization draft.
+Codex accelerates implementation in an isolated Git worktree; LegacyLink adds the
+controls needed to inspect the result before deployment:
 
-## Run
+- Strict Pydantic API contracts for dates, decimals, enums, and required fields.
+- XML validation with positive and negative tests.
+- A validation report with source fingerprinting and mapping evidence.
+- In-memory analysis of unseen SOAP payloads that flags sensitive field names and
+  returns metadata only—not raw XML values.
+- Optional Supabase audit records for safe analysis metadata.
+- A human review boundary rather than autonomous production deployment.
+
+## Architecture
+
+```mermaid
+flowchart LR
+    A[Legacy SOAP service] --> B[LegacyLink orchestrator]
+    B --> C[Codex isolated worktree]
+    C --> D[FastAPI REST draft]
+    D --> E[Dashboard and OpenAPI docs]
+    D --> F[Supabase audit metadata]
+    G[Reviewer] --> E
+    G --> H[Approve deployment]
+```
+
+## What you can try
+
+Open the [dashboard](https://legacy-link-monish-007s-projects.vercel.app/dashboard).
+
+| Feature | What it demonstrates |
+| --- | --- |
+| **GET `/v1/customer-data`** | A strictly typed JSON projection of the recorded SOAP fixture. |
+| **Validation evidence** | Source SHA-256, validated sections, strict types, and review status. |
+| **Analyze an unseen SOAP payload** | Field/type inference with sensitive-name detection; no source values returned. |
+| **Configured live source** | Optional server-side fetch from an allowlisted SOAP endpoint. |
+
+## Quick start
 
 ```powershell
 python -m venv .venv
 .\.venv\Scripts\Activate.ps1
 pip install -r requirements.txt
-uvicorn app.main:app --reload
+python -m uvicorn app.main:app --reload
 ```
 
-Call `GET /v1/customer-data`, `GET /v1/migration-report`, inspect
-`http://127.0.0.1:8000/docs`, or open `http://127.0.0.1:8000/dashboard`.
+Open `http://127.0.0.1:8000/dashboard` or `http://127.0.0.1:8000/docs`.
 
-## Tests
+Run tests:
 
 ```powershell
 pip install -r requirements-dev.txt
-pytest
+python -m pytest
 ```
 
-## Connect real SOAP sources and Supabase
+## Codex workflow
 
-1. Copy `.env.example` to your deployment's environment-variable configuration.
-2. Set `LEGACYLINK_SOURCES_JSON` with an allowlisted set of server-side source IDs
-   and URLs. Browser users can call only `/v1/sources/{source_id}/analyze`; they
-   cannot supply arbitrary URLs.
-3. Put credentials in separate environment variables, then reference their names
-   with `headers_env` and `body_env` in the source configuration.
-4. In Supabase SQL Editor, run `supabase/migrations/001_migration_runs.sql`.
-5. Add `SUPABASE_URL` and `SUPABASE_SECRET_KEY` only to the API's server
-   environment. This records contract metadata, never raw XML or credentials. A
-   legacy `SUPABASE_SERVICE_ROLE_KEY` also works, but a new secret key is preferred.
+The orchestration path is intentionally constrained:
 
-For a local demo, set `LEGACYLINK_ALLOW_HTTP=true` and point a source at the mock
-server. Do not enable HTTP in a public deployment.
+1. `legacy_server.py` simulates a legacy SOAP system.
+2. `orchestrator.py` captures its XML response.
+3. Codex works in a separate Git worktree and generates a reviewable API draft,
+   tests, and dashboard.
+4. A developer reviews the diff and test output before deployment.
 
-## Publish a public demo
+This repository includes a recorded fixture for a deterministic demo. It does not
+claim to autonomously deploy generated code to production.
 
-The repository includes a `Dockerfile` and `render.yaml` for a container host such
-as Render. Connect the repository, create a web service from `rest-wrapper`, and
-set the environment variables from `.env.example` in the host dashboard (never in
-Git). Use the public service URL for `/dashboard` and `/docs`.
+## Supabase audit storage
 
-Supabase provides the audit database, not the FastAPI web host. Keep the Supabase
-secret key server-only; do not place it in browser code or a repository.
+LegacyLink can store only safe analysis metadata—never raw XML, request credentials,
+or SOAP authentication headers.
 
-### Vercel (free Hobby demo)
+1. Run [supabase/migrations/001_migration_runs.sql](supabase/migrations/001_migration_runs.sql)
+   in the Supabase SQL Editor.
+2. Set these backend-only environment variables:
 
-For a personal hackathon demo, import the `main` branch into Vercel. The
-`api/index.py` file is the Vercel FastAPI entrypoint. The included rewrite rules
-route the public URLs to this function. Add `SUPABASE_URL` and
-`SUPABASE_SECRET_KEY` in Vercel's Environment Variables before deploying. After
-deployment, open `/dashboard` on the Vercel URL.
+```text
+SUPABASE_URL=https://your-project.supabase.co
+SUPABASE_SECRET_KEY=sb_secret_...
+```
 
-## Metering
+The secret key must never be committed, sent to the browser, or placed in frontend
+JavaScript.
 
-All requests except `/health` pass through `dodo_usage_metering`. It captures the
-path, status, duration, and optional `X-Customer-Id` and calls a **demonstration
-placeholder** `report_usage` hook. It fails open by design. Replace that hook with
-the approved Dodo Payments usage-event API/SDK call, with credentials configured
-through the deployment environment rather than source control.
+## Configuring a real SOAP source
 
-## Deliberate demo boundaries
+Only server-configured sources can be fetched; the browser cannot submit arbitrary
+URLs. Configure allowlisted source metadata with:
 
-- This repository uses a recorded SOAP fixture so the demo is deterministic.
-- It is not a production deployment: production use needs source authentication,
-  authorization, encrypted secret storage, SOAP fault handling, and a real billing
-  provider integration.
-- Generated changes should be reviewed and tested before deployment; LegacyLink
-  makes that review checkpoint explicit rather than claiming autonomous production
-  release.
+```text
+LEGACYLINK_SOURCES_JSON=[{"id":"partner-bank","url":"https://example.com/soap/customer","method":"POST"}]
+```
+
+For authenticated sources, keep headers and SOAP request bodies in separate backend
+environment variables and reference them by name. See [.env.example](.env.example).
+
+## Deployment
+
+The demo is deployed on Vercel. Vercel routes the public dashboard and API URLs to
+the FastAPI serverless function in `api/index.py`.
+
+Required Vercel environment variables:
+
+```text
+SUPABASE_URL
+SUPABASE_SECRET_KEY
+```
+
+## Technology
+
+- OpenAI Codex
+- Python, FastAPI, Pydantic
+- XML / SOAP contract mapping
+- Supabase Postgres
+- Vercel serverless deployment
+
+## Repository structure
+
+```text
+app/                    FastAPI application, mapper, models, and source service
+api/index.py            Vercel function entrypoint
+tests/                  XML mapping and safety tests
+supabase/migrations/    Audit-table schema
+orchestrator.py         Codex worktree workflow
+legacy_server.py        Local SOAP demo server
+```
+
+## Scope and next steps
+
+LegacyLink is a hackathon prototype focused on a trustworthy modernization workflow.
+A production rollout would add source authentication, role-based access, encrypted
+secret management, SOAP fault handling, approval workflows, and organization-level
+audit retention.
