@@ -9,5 +9,6 @@ create table if not exists public.migration_runs (
 alter table public.migration_runs enable row level security;
 
 -- No public policies: the backend service role is the only writer.
+grant usage on schema public to service_role;
 grant insert on table public.migration_runs to service_role;
 grant usage, select on sequence public.migration_runs_id_seq to service_role;
