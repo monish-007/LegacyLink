@@ -74,6 +74,14 @@ Git). Use the public service URL for `/dashboard` and `/docs`.
 Supabase provides the audit database, not the FastAPI web host. Keep the Supabase
 secret key server-only; do not place it in browser code or a repository.
 
+### Vercel (free Hobby demo)
+
+For a personal hackathon demo, import the `feature-rest-api` branch into Vercel.
+The root-level `index.py` is the Vercel FastAPI entrypoint and `vercel.json` sets a
+60-second function limit. Add `SUPABASE_URL` and `SUPABASE_SECRET_KEY` in Vercel's
+Environment Variables before deploying. After deployment, open `/dashboard` on the
+Vercel URL.
+
 ## Metering
 
 All requests except `/health` pass through `dodo_usage_metering`. It captures the
