@@ -1,29 +1,29 @@
 # LegacyLink
 
-### Turn undocumented SOAP/XML integrations into reviewable REST contracts.
+### A controlled workflow for modernising legacy SOAP/XML integrations
 
 [![Live dashboard](https://img.shields.io/badge/live%20dashboard-open-0ea5e9)](https://legacy-link-monish-007s-projects.vercel.app/dashboard)
 [![API docs](https://img.shields.io/badge/API%20docs-OpenAPI-16a34a)](https://legacy-link-monish-007s-projects.vercel.app/docs)
 
 **Live project:** <https://legacy-link-monish-007s-projects.vercel.app/dashboard> · **Source code:** <https://github.com/monish-007/LegacyLink>
 
-## The one-line idea
+## 1. Project Overview
 
-LegacyLink is a Codex-assisted modernization workspace for teams that still depend on legacy SOAP/XML systems. It discovers a candidate REST contract, generates a typed FastAPI projection, produces validation evidence, and detects sensitive fields before a developer approves release.
+LegacyLink is a Codex-assisted service for analysing legacy SOAP/XML integrations and preparing a typed REST representation. The system identifies fields and candidate types, generates a FastAPI projection, produces validation evidence, and identifies sensitive fields before release approval.
 
-## Why this matters
+## 2. Problem Statement
 
-Enterprise SOAP services are often undocumented, deeply nested, and difficult to consume from modern applications. A developer may have to manually inspect XML, infer types, write mappings, build tests, and check whether secrets accidentally appear in logs or API responses. That makes modernization slow and risky.
+Enterprise SOAP services are frequently undocumented, deeply nested, and difficult to consume from modern applications. Modernisation therefore requires manual XML inspection, type inference, field mapping, test creation, and protection of sensitive values. These activities increase implementation time and the risk of contract or data-handling errors.
 
-LegacyLink makes the workflow faster while preserving a human review boundary:
+LegacyLink provides the following controlled workflow:
 
 ```text
 Legacy SOAP/XML → contract discovery → typed REST draft → validation evidence → human review
 ```
 
-## Available capabilities
+## 3. Functional Capabilities
 
-Open the [live dashboard](https://legacy-link-monish-007s-projects.vercel.app/dashboard), or inspect the [interactive OpenAPI docs](https://legacy-link-monish-007s-projects.vercel.app/docs).
+The deployed [dashboard](https://legacy-link-monish-007s-projects.vercel.app/dashboard) and [OpenAPI documentation](https://legacy-link-monish-007s-projects.vercel.app/docs) provide access to the implemented capabilities.
 
 | Capability | Evidence in the running app |
 | --- | --- |
@@ -34,9 +34,9 @@ Open the [live dashboard](https://legacy-link-monish-007s-projects.vercel.app/da
 | Trusted source workflow | `GET /v1/sources` and `POST /v1/sources/{source_id}/analyze` use server-configured sources only |
 | Operational check | `GET /health` returns the service health status |
 
-## Demonstration workflow
+## 4. Demonstration Procedure
 
-The deployed dashboard provides a concise workflow for inspecting the modernization result:
+The deployed dashboard supports the following verification procedure:
 
 1. Run **Execute GET customer data** to view the strictly typed REST response produced from the legacy XML fixture.
 2. Open **View validation evidence** to inspect the SHA-256 source fingerprint, validated sections, strict types, and explicit human-approval requirement.
@@ -58,29 +58,28 @@ The deployed dashboard provides a concise workflow for inspecting the modernizat
 
 The result infers `Balance` as a decimal and `NextReviewDate` as a date, flags `AuthToken` as sensitive, and explicitly reports `raw_values_returned: false`.
 
-## How Codex is part of the product
+## 5. Codex Development Workflow
 
-Codex is used as the implementation engine in the modernization loop, not merely as a chat assistant:
+Codex is used as the implementation engine for the modernisation workflow:
 
 1. The local legacy server provides a deterministic SOAP/XML response.
 2. The orchestrator captures the contract and works in an isolated Git worktree.
 3. Codex generates and refines the FastAPI routes, Pydantic models, XML mapper, tests, dashboard, and documentation.
 4. The developer reviews the diff and test output before deployment.
 
-This makes generated work inspectable and reversible. LegacyLink deliberately does not autonomously deploy generated code to production.
+Generated changes remain inspectable and reversible. Production deployment remains subject to developer review and approval.
 
-## Design strengths
+## 6. Security and Governance Properties
 
-- **Faster migration:** reduces repetitive XML reverse-engineering and mapping work.
-- **Beyond a fixed demo:** analyzes new XML payloads within bounded size and field limits.
-- **Privacy-aware by default:** analysis returns paths, types, confidence, and sensitivity metadata—not source values.
-- **Strict contracts:** Pydantic validation covers structured dates, decimals, enums, and required fields.
-- **Evidence over trust:** source hashing, validation summaries, and automated tests make the generated result reviewable.
-- **Server-side source controls:** arbitrary browser URLs are rejected; configured sources and credentials stay on the server.
-- **Audit-ready:** optional Supabase storage records analysis metadata only, never raw XML or authentication headers.
-- **Practical adoption path:** modernizes an existing integration without requiring an immediate replacement of the legacy system.
+- **Bounded analysis:** new XML payloads are processed within defined size and field limits.
+- **Privacy-preserving output:** analysis returns paths, types, confidence, and sensitivity metadata; source values are not returned.
+- **Strict contracts:** Pydantic validation covers dates, decimals, enumerations, and required fields.
+- **Validation evidence:** source hashing, validation summaries, and automated tests support review of generated results.
+- **Server-side source controls:** clients cannot submit arbitrary URLs; configured sources and credentials remain on the server.
+- **Metadata-only audit:** optional Supabase integration stores analysis metadata and excludes raw XML and authentication headers.
+- **Incremental adoption:** the REST projection can be introduced while the legacy service remains operational.
 
-## Architecture
+## 7. System Architecture
 
 ```mermaid
 flowchart LR
@@ -94,7 +93,7 @@ flowchart LR
     H --> I[Approve next deployment step]
 ```
 
-## API surface
+## 8. API Reference
 
 | Method | Endpoint | Purpose |
 | --- | --- | --- |
@@ -106,7 +105,7 @@ flowchart LR
 | `POST` | `/v1/sources/{source_id}/analyze` | Fetch and analyze an allowlisted source |
 | `GET` | `/dashboard` | Human-friendly review UI |
 
-## Run locally
+## 9. Local Development
 
 ```powershell
 python -m venv .venv
@@ -124,7 +123,7 @@ pip install -r requirements-dev.txt
 python -m pytest
 ```
 
-## Optional Supabase audit
+## 10. Supabase Audit Integration
 
 Run [`supabase/migrations/001_migration_runs.sql`](supabase/migrations/001_migration_runs.sql) in the Supabase SQL Editor, then configure these backend-only variables:
 
@@ -135,7 +134,7 @@ SUPABASE_SECRET_KEY=sb_secret_...
 
 Only safe analysis metadata is written. Never commit the secret key, expose it in frontend JavaScript, or send it to a browser.
 
-## Configure a real SOAP source
+## 11. Source Configuration
 
 Sources are allowlisted through server environment configuration; clients cannot submit arbitrary URLs:
 
@@ -145,11 +144,11 @@ LEGACYLINK_SOURCES_JSON=[{"id":"partner-bank","url":"https://example.com/soap/cu
 
 Keep authentication headers and SOAP bodies in separate backend environment variables. See [`.env.example`](.env.example). HTTPS is required for deployed sources; HTTP is intended only for explicitly enabled local demos.
 
-## Technology
+## 12. Technology Stack
 
 OpenAI Codex · Python · FastAPI · Pydantic · XML/SOAP · Supabase Postgres · Vercel
 
-## Repository map
+## 13. Repository Structure
 
 ```text
 app/                    FastAPI app, models, mapper, analyzer, source service
@@ -161,10 +160,10 @@ legacy_server.py        Deterministic local SOAP fixture
 dashboard.html          Reviewer dashboard
 ```
 
-## Honest prototype boundary
+## 14. Scope and Production Considerations
 
-LegacyLink is a hackathon prototype focused on trustworthy migration assistance. A production rollout would add enterprise secret management, authenticated source connectors, SOAP fault/retry policies, role-based approvals, encrypted audit retention, and organization-level access controls.
+LegacyLink is a prototype for migration assistance. A production implementation would require enterprise secret management, authenticated source connectors, SOAP fault and retry policies, role-based approvals, encrypted audit retention, and organisation-level access controls.
 
-## Project outcome
+## 15. Summary
 
-LegacyLink turns legacy integration modernization from manual reverse-engineering into a measurable, reviewable workflow: **discover the contract, generate the REST draft, prove what was validated, protect sensitive fields, and let a human approve the next step.**
+LegacyLink provides a measurable and reviewable path from legacy SOAP/XML contracts to typed REST interfaces. The system combines contract discovery, generated mappings, validation evidence, sensitive-field detection, and human approval within one workflow.
