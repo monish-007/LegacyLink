@@ -1,0 +1,1 @@
+"""REST wrapper application package."""

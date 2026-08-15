@@ -1,93 +1,101 @@
-# LegacyLink 🔗
+# LegacyLink: Verifiable SOAP-to-REST modernization
 
-## Codex-assisted, verifiable SOAP-to-REST modernization
+LegacyLink turns a legacy SOAP response into a typed FastAPI service that a modern
+team can inspect, test, and approve. Codex accelerates the implementation; strict
+runtime validation and a human deployment gate keep it accountable.
 
-The Problem
-Enterprises (banks, healthcare, government) are handcuffed to 20-year-old, undocumented SOAP XML monoliths. When modern startups or internal teams need to integrate with these systems, developers spend weeks manually reverse-engineering deeply nested XML just to write basic REST wrappers. It is a massive bottleneck.
+## Why it matters
 
-The Solution
-LegacyLink turns this technical debt into a reviewable migration draft. Instead of
-claiming autonomous deployment, it uses Codex to accelerate the parts that benefit
-from an agent, then makes the resulting contract and test evidence easy for a human
-to inspect:
+Teams integrating with undocumented SOAP systems often spend days reverse-engineering
+deeply nested XML before they can make a safe API change. LegacyLink demonstrates a
+repeatable path from a captured SOAP contract to an OpenAPI-backed REST endpoint,
+while retaining evidence that the mapping was validated.
 
-Probes the legacy endpoint to extract raw, undocumented XML schemas.
+## What a judge can verify in two minutes
 
-Dispatches OpenAI Codex into an isolated Git worktree.
+1. Start the app and open `/dashboard`.
+2. Click **Execute GET /v1/customer-data** to inspect the strictly typed JSON API.
+3. Click **View validation evidence** to see the source digest, validated sections,
+   strict types, and explicit human-approval requirement.
+4. Paste a second SOAP payload into **Try an unseen SOAP payload**. LegacyLink
+   discovers candidate JSON fields and types in memory, flags sensitive fields, and
+   returns no source values.
+5. Configure an allowlisted source and use **Analyze a configured live source** to
+   fetch it server-side, analyze only its contract metadata, and optionally write an
+   audit record to Supabase.
+6. Open `/docs` to inspect the generated OpenAPI contract.
 
-Generates a strict FastAPI backend, tests, OpenAPI contract, and developer dashboard.
+The raw SOAP authentication header is never exposed by either public endpoint.
+The dashboard uses no build step or external CSS dependency, so it remains readable
+when a demo environment has no internet access.
 
-Adds an explicit, replaceable Dodo Payments metering boundary.
+## Run
 
-## Why this is a Codex project—not an AI checkbox
+```powershell
+python -m venv .venv
+.\.venv\Scripts\Activate.ps1
+pip install -r requirements.txt
+uvicorn app.main:app --reload
+```
 
-Codex receives the captured XML contract and a constrained engineering objective. It
-works inside an isolated worktree to generate a reviewable implementation, including
-strict types and negative tests. LegacyLink deliberately requires review before
-deployment; the dashboard exposes the evidence behind the mapping rather than asking
-an operator to trust a black box.
+Call `GET /v1/customer-data`, `GET /v1/migration-report`, inspect
+`http://127.0.0.1:8000/docs`, or open `http://127.0.0.1:8000/dashboard`.
 
-Key Features
-Verifiable Modernization: Turns a SOAP fixture into a typed REST draft with visible validation evidence.
+## Tests
 
-Enterprise-Grade Typing: Generates strict Pydantic models (e.g., using Decimal for currency to prevent float precision loss).
+```powershell
+pip install -r requirements-dev.txt
+pytest
+```
 
-Fail-Open Metering Boundary: Captures usage safely and can be connected to Dodo Payments in a deployed environment.
+## Connect real SOAP sources and Supabase
 
-Built-in Developer UI: Ships with an interactive Tailwind CSS dashboard for live testing.
+1. Copy `.env.example` to your deployment's environment-variable configuration.
+2. Set `LEGACYLINK_SOURCES_JSON` with an allowlisted set of server-side source IDs
+   and URLs. Browser users can call only `/v1/sources/{source_id}/analyze`; they
+   cannot supply arbitrary URLs.
+3. Put credentials in separate environment variables, then reference their names
+   with `headers_env` and `body_env` in the source configuration.
+4. In Supabase SQL Editor, run `supabase/migrations/001_migration_runs.sql`.
+5. Add `SUPABASE_URL` and `SUPABASE_SECRET_KEY` only to the API's server
+   environment. This records contract metadata, never raw XML or credentials. A
+   legacy `SUPABASE_SERVICE_ROLE_KEY` also works, but a new secret key is preferred.
 
-🚀 Quickstart Guide (Demo)
-This project requires two terminals to simulate the legacy-to-modern pipeline.
+For a local demo, set `LEGACYLINK_ALLOW_HTTP=true` and point a source at the mock
+server. Do not enable HTTP in a public deployment.
 
-Step 1: Boot the Legacy Monolith
-In Terminal 1, start the legacy 2005 banking server. This serves the raw, nested SOAP XML payload.
+## Publish a public demo
 
-Bash
-python legacy_server.py
-(Runs on port 8085)
+The repository includes a `Dockerfile` and `render.yaml` for a container host such
+as Render. Connect the repository, create a web service from `rest-wrapper`, and
+set the environment variables from `.env.example` in the host dashboard (never in
+Git). Use the public service URL for `/dashboard` and `/docs`.
 
-Step 2: Run the Orchestrator
-In Terminal 2, trigger the engine. This will probe the legacy server, extract the schema, spawn a secure Git worktree (rest-wrapper), and dispatch the agent to write the backend.
+Supabase provides the audit database, not the FastAPI web host. Keep the Supabase
+secret key server-only; do not place it in browser code or a repository.
 
-Bash
-python orchestrator.py
-Step 3: Launch the Modern API
-Once Codex finishes generating the draft, review its diff and test results, then boot
-the modern backend.
+### Vercel (free Hobby demo)
 
-Bash
-cd rest-wrapper
-pip install fastapi uvicorn pydantic
-python -m uvicorn app.main:app --reload
-(Runs on port 8000)
+For a personal hackathon demo, import the `feature-rest-api` branch into Vercel.
+The root-level `index.py` is the Vercel FastAPI entrypoint and `vercel.json` sets a
+60-second function limit. Add `SUPABASE_URL` and `SUPABASE_SECRET_KEY` in Vercel's
+Environment Variables before deploying. After deployment, open `/dashboard` on the
+Vercel URL.
 
-Step 4: View the Dashboard
-Open the generated Developer Dashboard. It lets a reviewer test the endpoint and
-inspect the source digest, strict validation coverage, and human approval gate:
-👉 [http://127.0.0.1:8000/dashboard](http://127.0.0.1:8000/dashboard)
+## Metering
 
-Architecture & Branch Strategy
-To maintain reviewability and version control, the agentic engine operates across branches:
+All requests except `/health` pass through `dodo_usage_metering`. It captures the
+path, status, duration, and optional `X-Customer-Id` and calls a **demonstration
+placeholder** `report_usage` hook. It fails open by design. Replace that hook with
+the approved Dodo Payments usage-event API/SDK call, with credentials configured
+through the deployment environment rather than source control.
 
-main: Contains the core orchestrator.py engine and the legacy_server.py monolith.
+## Deliberate demo boundaries
 
-feature-rest-api: The isolated Git worktree where Codex generates a reviewable FastAPI application, Pydantic models, tests, and frontend UI.
-
-## Demo narration (90 seconds)
-
-"A team needs customer data from a legacy SOAP system, but its XML contract is
-undocumented. LegacyLink captures the response, gives Codex a constrained task in an
-isolated worktree, and produces a typed REST draft. The dashboard shows the result—
-but more importantly, it shows the evidence: the source fingerprint, the fields
-validated, the strict types, and the fact that a person still approves deployment.
-The outcome is not blind autonomous code generation; it is a faster, auditable path
-to modernization."
-
-Tech Stack
-Agent Engine: OpenAI Codex CLI / Python subprocess
-
-Backend: Python, FastAPI, Pydantic, Uvicorn
-
-Frontend: HTML5, Tailwind CSS
-
-Monetization: Dodo Payments (Middleware)
+- This repository uses a recorded SOAP fixture so the demo is deterministic.
+- It is not a production deployment: production use needs source authentication,
+  authorization, encrypted secret storage, SOAP fault handling, and a real billing
+  provider integration.
+- Generated changes should be reviewed and tested before deployment; LegacyLink
+  makes that review checkpoint explicit rather than claiming autonomous production
+  release.
